@@ -8,12 +8,14 @@ from PyQt5.QtWidgets import QWidget, QDesktopWidget, QApplication, \
 class Window(QWidget):
 
     def __init__(self):
+        """Ctor"""
         super().__init__()
         self.photo = QLabel("Your photo will appear here once loaded")
         self.photo.setScaledContents(True)
         self.init_ui()
 
     def init_ui(self):
+        """User interface initialization"""
         layout = QGridLayout()
 
         btn_train = QPushButton("Train")
@@ -36,12 +38,15 @@ class Window(QWidget):
         self.show()
 
     def center(self):
+        """Centers the window on the screen"""
         qt_rectangle = self.frameGeometry()
         center_point = QDesktopWidget().availableGeometry().center()
         qt_rectangle.moveCenter(center_point)
         self.move(qt_rectangle.topLeft())
 
     def load_photo(self) -> None:
+        """Prompts a file dialog and then
+        loads chosen image file"""
         path, _filter = QFileDialog.getOpenFileName(
             parent=self,
             caption=self.tr("Open file"),
