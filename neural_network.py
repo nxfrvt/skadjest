@@ -10,12 +10,13 @@ ALPHA = 0.9  # współczynnik ɑ, przyjmuje się 0.9
 # warstwa ukryta - 47
 # ostatnia warstwa 35 neuronów - ilość znaków używanych do tablic
 
-alphanumeric = ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A",
-                "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
-                "N", "O", "P", "R", "S", "T", "U", "V", "W", "X", "Y", "Z")
+charset = ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A",
+           "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+           "N", "O", "P", "R", "S", "T", "U", "V", "W", "X", "Y", "Z")
 
-training_data = []
-training_labels = [[0 for _ in range(len(alphanumeric))] for _ in range(len(alphanumeric))]
+training_data = []  # tablica zawierajaca dane trenujace z plików graficznych(fontu)
+training_labels = [[0 for _ in range(len(charset))] for _ in range(len(charset))]
+# ^tablica "labelujaca" dane z training_data. Przy deklaracji wypelniania zerami do dimension = 35x35
 
 
 def sigmoid(array: np.array) -> np.array:
@@ -43,8 +44,13 @@ def sigmoid_derivative(sig: np.array) -> np.array:
 
 
 def _load_training_data():
+    """Loads the training data from training_data directory.
+    Updates the labels to corresponding chars from charset f.e
+    training_labels[1] = [0, 1, 0, 0, 0, ... 0]
+    training_labels[2] = [0, 0, 1, 0, 0, ... 0]
+    """
     i = 0
-    for char in alphanumeric:
+    for char in charset:
         image = cv2.imread('rsc/training_data/' + str(char) + '.png')
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         training_data.append(image / 255)
@@ -53,7 +59,6 @@ def _load_training_data():
 
 
 class NeuralNetwork:
-
     def __init__(self):
         """Ctor"""
         self.neurons = (800, 64, 47, 35)  # 800 to rozmiar obrazu trenujacego
@@ -61,7 +66,6 @@ class NeuralNetwork:
                        [np.ndarray, np.ndarray],  # warstwa ukryta [wagi], [bias]
                        [np.ndarray, np.ndarray]]  # warstwa wyjsciowa [wagi], [bias]
         self.__init_layers()
-        _load_training_data()
 
     def __init_layers(self):
         """Initializes all 3 layers with random values (weights and biases)"""
@@ -70,10 +74,12 @@ class NeuralNetwork:
             self.layers[layer][1] = np.random.rand(self.neurons[layer + 1])
 
     def train(self):
+        _load_training_data()
         # TODO input_data input_label
         pass
 
 
 if __name__ == '__main__':
     nn = NeuralNetwork()
+    nn.train()
     print("xd")
