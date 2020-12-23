@@ -1,7 +1,3 @@
-import json
-import pathlib
-import sys
-
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QWidget, QDesktopWidget, \
     QGridLayout, QPushButton, QLabel, QMainWindow
