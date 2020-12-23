@@ -151,12 +151,12 @@ if __name__ == '__main__':
     nn = NeuralNetwork()
     nn.train()
 
-    while True:
+    while True:             # <-------bugged
         x = input("podaj znak")
         test = cv2.imread('rsc/training_data/' + x + '.png')
         print("reading " + x)
         test = cv2.resize(test, (20, 40))
         test = cv2.cvtColor(test, cv2.COLOR_BGR2GRAY)
-        found_char = nn.estimate(test)
+        found_char = nn.estimate(test)      # tutaj pluje to samo nawet przy innym obrazku jakby nie szacowało na nowo
         print(f"Found char: {charset[found_char-1]}")
         print("xd")  # debug line
