@@ -68,6 +68,12 @@ class NeuralNetwork:
         self.layers = [[np.ndarray, np.ndarray],  # warstwa początkowa [wagi], [bias]
                        [np.ndarray, np.ndarray],  # warstwa ukryta [wagi], [bias]
                        [np.ndarray, np.ndarray]]  # warstwa wyjsciowa [wagi], [bias]
+        self.temp_weights = [np.zeros((self.neurons[1], self.neurons[0])),
+                             np.zeros((self.neurons[2], self.neurons[1])),
+                             np.zeros((self.neurons[3], self.neurons[2]))]
+        self.temp_biases = [np.zeros((self.neurons[1], 1)),
+                            np.zeros((self.neurons[2], 1)),
+                            np.zeros((self.neurons[3], 1))]
         self.__init_layers()
         self.activations = [0, 0, 0]
         self.derivatives = [0, 0, 0]
@@ -81,29 +87,76 @@ class NeuralNetwork:
 
     def train(self):
         _load_training_data()
-        for i in range(len(training_data)):
-            self.activations[0] = sigmoid(
-                self.layers[0][0] @ training_data[i] + self.layers[0][1])  # warstwa poczatkowa
-            for layer in range(1, len(self.layers)):  # propagacja wprzod
-                self.activations[layer] = \
-                    sigmoid(self.layers[layer][0] @ self.activations[layer - 1] + self.layers[layer][1])
+        # >ITERATION
+        it = 1000
+        for dab in range(it):
+            step = it/100
+            if dab % step == 0:
+                print(dab/step)
+            for i in range(len(training_data)):
+                self.activations[0] = sigmoid(
+                    self.layers[0][0] @ training_data[i] + self.layers[0][1])  # warstwa poczatkowa
+                for layer in range(1, len(self.layers)):  # propagacja wprzod
+                    self.activations[layer] = \
+                        sigmoid(self.layers[layer][0] @ self.activations[layer - 1] + self.layers[layer][1])
 
-            for layer in range(len(self.layers)):  # propagacja wstecz
-                self.derivatives[layer] = sigmoid_derivative(self.activations[layer])
+                for layer in range(len(self.layers)):  # propagacja wstecz
+                    self.derivatives[layer] = sigmoid_derivative(self.activations[layer])
 
-            label = np.array(training_labels[i].reshape(self.neurons[-1], 1))
-            self.delta[len(self.layers) - 1] = (label - self.activations[len(self.layers) - 1]) \
-                                               * self.derivatives[len(self.layers) - 1]
-            for layer in range(len(self.layers) - 2, 0, -1):
-                self.delta[layer] = (
+                label = np.array(training_labels[i].reshape(self.neurons[-1], 1))
+                self.delta[len(self.layers) - 1] = (label - self.activations[len(self.layers) - 1]) \
+                                                   * self.derivatives[len(self.layers) - 1]
+                for layer in range(len(self.layers) - 2, 0, -1):
+                    self.delta[layer] = (
                             self.layers[layer + 1][0].transpose() @ self.delta[layer + 1] * self.derivatives[layer])
 
+                #  updating weights
+                self.temp_weights[0] = RO * np.multiply(
+                    np.tile(self.delta[0], (1, self.layers[0][0].shape[1])),
+                    np.tile(training_data[i].transpose(), (self.layers[0][0].shape[0], 1)) + ALPHA * self.temp_weights[
+                        0]
+                )
 
-        # TODO trenowanie
-        pass
+                self.layers[0][0] += self.temp_weights[0]
+                self.temp_biases[0] = RO * self.delta[0] + ALPHA * self.temp_biases[0]
+
+                self.layers[0][1] += self.temp_biases[0]
+
+                for layer in range(1, len(self.layers)):
+                    self.temp_weights[layer] = RO * np.multiply(
+                        np.tile(self.delta[layer], (1, self.layers[layer][0].shape[1])),
+                        np.tile(self.activations[layer - 1].transpose(),
+                                (self.layers[layer][0].shape[0], 1)) + ALPHA * self.temp_weights[layer]
+                    )
+                    self.layers[layer][0] += self.temp_weights[layer]
+
+                    self.temp_biases[layer] = RO * self.delta[layer] + ALPHA * self.temp_biases[layer]
+                    self.layers[layer][1] += self.temp_biases[layer]
+
+    def estimate(self, char):
+        char = np.array(char).reshape(800, 1)
+        char = char / 255
+        activations = sigmoid(self.layers[0][0] @ char + self.layers[0][1])
+        for layer in range(1, len(self.layers)):
+            activations = sigmoid(self.layers[layer][0] @ activations + self.layers[layer][1])
+
+        index = int(activations.argmax(axis=0))
+        activation_index = float(activations[index]) * 100
+        print(str(int(activations.argmax(axis=0))) + ": " + str(float(activations[index]) * 100))
+
+        return index
 
 
 if __name__ == '__main__':
     nn = NeuralNetwork()
     nn.train()
-    print("xd")
+
+    while True:
+        x = input("podaj znak")
+        test = cv2.imread('rsc/training_data/' + x + '.png')
+        print("reading " + x)
+        test = cv2.resize(test, (20, 40))
+        test = cv2.cvtColor(test, cv2.COLOR_BGR2GRAY)
+        found_char = nn.estimate(test)
+        print(f"Found char: {charset[found_char-1]}")
+        print("xd")  # debug line
