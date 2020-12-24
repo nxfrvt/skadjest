@@ -26,19 +26,25 @@ class App(QApplication):
     def load_photo(self) -> None:
         """Prompts a file dialog and then
         loads chosen image file"""
+        self.window.statusBar().showMessage("File explorer opened")
+
         path, _filter = QFileDialog.getOpenFileName(
             parent=self.window,
             caption=self.window.tr("Open file"),
             directory='c:\\users\\mazur\\desktop',
             filter=self.window.tr("Image files (*.png *.jpg *.gif)"))
         self.window.photo.setPixmap(QPixmap(path))
+        self.window.statusBar().showMessage("Image loaded")
 
     def read_plate(self) -> None:
         """Reads the lbl_plate from photo and
         updates the corresponding label"""
+        self.window.statusBar().showMessage("Reading the plate from the image")
         self.window.lbl_plate.setText(f"Plate read from the image:\n{self.plate}")
+        self.window.statusBar().showMessage("Looking for matching province symbols")
         self.window.lbl_province.setText("Matching province couldn't be found")
         self.detect_province()
+        self.window.statusBar().showMessage("Application ready")
 
     def detect_province(self) -> None:
         province_char = self.plate[0]
@@ -52,7 +58,7 @@ class App(QApplication):
                     self.window.lbl_province.setText(f"Found province: {province}")
 
     def init_events(self) -> None:
-        self.window.btn_train.clicked.connect(lambda: print("training..."))  # TODO podpiecie pod trenowanie
+        self.window.btn_train.clicked.connect(lambda: self.window.statusBar().showMessage("Training the network"))  # TODO podpiecie pod trenowanie
         self.window.btn_open.clicked.connect(lambda: self.load_photo())
         self.window.btn_read.clicked.connect(lambda: self.read_plate())
 

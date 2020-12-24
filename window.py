@@ -1,6 +1,7 @@
 from PyQt5 import QtCore
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QWidget, QDesktopWidget, \
-    QGridLayout, QPushButton, QLabel, QMainWindow
+    QGridLayout, QPushButton, QLabel, QMainWindow, QAction, qApp
 
 
 class Window(QMainWindow):
@@ -8,7 +9,6 @@ class Window(QMainWindow):
     def __init__(self):
         """Ctor"""
         super().__init__()
-
         self.plate = "None"
         self.photo = QLabel("Your photo will appear here once loaded")
         self.photo.setScaledContents(True)
@@ -25,6 +25,8 @@ class Window(QMainWindow):
     def init_ui(self) -> None:
         """User interface initialization"""
         layout = QGridLayout()
+        self.statusBar()
+        self.statusBar().showMessage("Starting the application.")
 
         layout.addWidget(self.btn_train, 0, 0)
         layout.addWidget(self.btn_open, 3, 0)
@@ -41,6 +43,19 @@ class Window(QMainWindow):
         self.setWindowTitle('SkadJest')
         self.center()
         self.show()
+
+        self.statusBar().showMessage("Application ready")
+
+    # def init_menubar(self):
+    #     menubar = self.menuBar()
+    #
+    #     act_exit = QAction(QIcon('exit.png'), '&Exit', self)
+    #     act_exit.setShortcut('Ctrl+Q')
+    #     act_exit.setStatusTip('Exit application')
+    #     act_exit.triggered.connect(lambda x: print("xd"))
+    #
+    #     menu_file = menubar.addMenu('&File')
+    #     menu_file.addAction(act_exit)
 
     def center(self) -> None:
         """Centers the window on the screen"""
