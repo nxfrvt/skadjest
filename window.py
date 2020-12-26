@@ -7,6 +7,7 @@ from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import QWidget, QDesktopWidget, \
     QGridLayout, QPushButton, QLabel, QMainWindow, QAction, QMenuBar, QFileDialog
 from about import AboutDialog
+from run import load_photo, read_plate
 
 
 class Window(QMainWindow):
@@ -31,15 +32,15 @@ class Window(QMainWindow):
         self.btn_train = QPushButton("Train")
         self.btn_open = QPushButton("Open a photo")
         self.btn_read = QPushButton("Read the plate")
-        self.init_ui()
+        self.__init_ui()
 
-    def init_ui(self) -> None:
+    def __init_ui(self) -> None:
         """User interface initialization"""
         layout = QGridLayout()
         self.statusBar().showMessage("Starting the application.")
 
         #  add the menu bar at the top
-        layout.addWidget(self.init_menubar(), 0, 0, 1, 4)
+        layout.addWidget(self.__init_menubar(), 0, 0, 1, 4)
 
         layout.addWidget(self.btn_train, 1, 0)
         layout.addWidget(self.btn_open, 6, 0)
@@ -53,23 +54,24 @@ class Window(QMainWindow):
         self.setCentralWidget(central_widget)
         central_widget.setLayout(layout)
 
-        self.init_events()
+        self.__init_events()
         self.statusBar().showMessage("Application ready")
 
-    def init_menubar(self) -> QMenuBar:
+    def __init_menubar(self) -> QMenuBar:
+        #  File menu
         menu_file = self.menubar.addMenu('File')
 
         act_open = QAction(QIcon('rsc/icons/open.png'), '&Open', self)
         act_open.setShortcut('Ctrl+O')
         act_open.setStatusTip('Open image')
-        act_open.triggered.connect(lambda: self.load_photo())
+        act_open.triggered.connect(lambda: load_photo(self))
         menu_file.addAction(act_open)
         menu_file.addSeparator()
 
         act_read = QAction(QIcon('rsc/icons/read.png'), '&Read', self)
         act_read.setShortcut('Ctrl+R')
         act_read.setStatusTip('Read plate')
-        act_read.triggered.connect(lambda: self.read_plate())
+        act_read.triggered.connect(lambda: read_plate(self))
         menu_file.addAction(act_read)
         menu_file.addSeparator()
 
@@ -79,8 +81,8 @@ class Window(QMainWindow):
         act_exit.triggered.connect(lambda: sys.exit())
         menu_file.addAction(act_exit)
 
+        #  Help menu
         menu_help = self.menubar.addMenu("Help")
-        #TODO help action
 
         act_about = QAction(QIcon('rsc/icons/about.png'), '&About', self)
         act_about.setShortcut('Ctrl+A')
@@ -90,6 +92,13 @@ class Window(QMainWindow):
 
         return self.menubar
 
+    def __init_events(self) -> None:
+        """Connects all events to corresponding widgets"""
+        self.btn_train.clicked.connect(
+            lambda: self.statusBar().showMessage("Training the network"))  # TODO podpiecie pod trenowanie
+        self.btn_open.clicked.connect(lambda: load_photo(self))
+        self.btn_read.clicked.connect(lambda: read_plate(self))
+
     def center(self) -> None:
         """Centers the window on the screen"""
         qt_rectangle = self.frameGeometry()
@@ -97,47 +106,7 @@ class Window(QMainWindow):
         qt_rectangle.moveCenter(center_point)
         self.move(qt_rectangle.topLeft())
 
-    def load_photo(self) -> None:
-        """Prompts a file dialog and then
-        loads chosen image file"""
-        self.statusBar().showMessage("File explorer opened")
-
-        path, _filter = QFileDialog.getOpenFileName(
-            parent=self,
-            caption=self.tr("Open file"),
-            directory='c:\\users\\mazur\\desktop',
-            filter=self.tr("Image files (*.png *.jpg *.gif)"))
-        self.photo.setPixmap(QPixmap(path))
-        self.statusBar().showMessage("Image loaded")
-
-    def read_plate(self) -> None:
-        """Reads the lbl_plate from photo and
-        updates the corresponding label"""
-        self.statusBar().showMessage("Reading the plate from the image")
-        self.lbl_plate.setText(f"Plate read from the image:\n WU6337A")
-        self.statusBar().showMessage("Looking for matching province symbols")
-        self.lbl_province.setText("Matching province couldn't be found")
-        self.detect_province()
-        self.statusBar().showMessage("Application ready")
-
-    def detect_province(self) -> None:
-        province_char = self.lbl_plate.text()[28]
-
-        path = str(pathlib.Path(__file__).parent.absolute())
-        with open(path + '/provinces.json') as json_file:
-            data = json.load(json_file)
-            for p in data['provinces']:
-                if province_char == p['symbol']:
-                    province = p['province']
-                    self.lbl_province.setText(f"Found province: {province}")
-
     def about(self) -> None:
-        print("Dialog should be displayed")
+        """Displays the About dialog"""
         dlg = AboutDialog(self)
         dlg.exec_()
-
-    def init_events(self) -> None:
-        self.btn_train.clicked.connect(
-            lambda: self.statusBar().showMessage("Training the network"))  # TODO podpiecie pod trenowanie
-        self.btn_open.clicked.connect(lambda: self.load_photo())
-        self.btn_read.clicked.connect(lambda: self.read_plate())
