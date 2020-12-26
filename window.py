@@ -7,7 +7,6 @@ from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import QWidget, QDesktopWidget, \
     QGridLayout, QPushButton, QLabel, QMainWindow, QAction, QMenuBar, QFileDialog
 from about import AboutDialog
-from run import load_photo, read_plate
 
 
 class Window(QMainWindow):
@@ -18,7 +17,7 @@ class Window(QMainWindow):
         self.menubar = QMenuBar()
         self.setMinimumSize(800, 500)
         self.setWindowTitle('SkadJest')
-        self.center()
+        self.__center()
         self.show()
 
         self.plate = "None"
@@ -87,7 +86,7 @@ class Window(QMainWindow):
         act_about = QAction(QIcon('rsc/icons/about.png'), '&About', self)
         act_about.setShortcut('Ctrl+A')
         act_about.setStatusTip('About')
-        act_about.triggered.connect(lambda: self.about())
+        act_about.triggered.connect(lambda: self.__about())
         menu_help.addAction(act_about)
 
         return self.menubar
@@ -99,14 +98,53 @@ class Window(QMainWindow):
         self.btn_open.clicked.connect(lambda: load_photo(self))
         self.btn_read.clicked.connect(lambda: read_plate(self))
 
-    def center(self) -> None:
+    def __center(self) -> None:
         """Centers the window on the screen"""
         qt_rectangle = self.frameGeometry()
         center_point = QDesktopWidget().availableGeometry().center()
         qt_rectangle.moveCenter(center_point)
         self.move(qt_rectangle.topLeft())
 
-    def about(self) -> None:
+    def __about(self) -> None:
         """Displays the About dialog"""
         dlg = AboutDialog(self)
         dlg.exec_()
+
+
+def load_photo(window: Window) -> None:
+    """Prompts a file dialog and then
+    loads chosen image file"""
+    window.statusBar().showMessage("File explorer opened")
+
+    path, _filter = QFileDialog.getOpenFileName(
+        parent=window,
+        caption=window.tr("Open file"),
+        directory='c:\\users\\mazur\\desktop',
+        filter=window.tr("Image files (*.png *.jpg *.gif)"))
+    window.photo.setPixmap(QPixmap(path))
+    window.statusBar().showMessage("Image loaded")
+
+
+def read_plate(window: Window) -> None:
+    """Reads the lbl_plate from photo and
+    updates the corresponding label"""
+    window.statusBar().showMessage("Reading the plate from the image")
+    window.lbl_plate.setText(f"Plate read from the image:\n WU6337A")
+    window.statusBar().showMessage("Looking for matching province symbols")
+    window.lbl_province.setText("Matching province couldn't be found")
+    detect_province(window)
+    window.statusBar().showMessage("Application ready")
+
+
+def detect_province(window: Window) -> None:
+    """Detects the province from the plate read from the image"""
+    province_char = window.lbl_plate.text()[28]
+    path = str(pathlib.Path(__file__).parent.absolute())
+    with open(path + '/provinces.json') as json_file:
+        data = json.load(json_file)
+        for p in data['provinces']:
+            if province_char == p['symbol']:
+                province = p['province']
+                window.lbl_province.setText(f"Found province: {province}")
+
+
