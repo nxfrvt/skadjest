@@ -5,7 +5,8 @@ import sys
 from PyQt5 import QtCore
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import QWidget, QDesktopWidget, \
-    QGridLayout, QPushButton, QLabel, QMainWindow, QAction, qApp, QMenuBar, QFileDialog
+    QGridLayout, QPushButton, QLabel, QMainWindow, QAction, QMenuBar, QFileDialog
+from about import AboutDialog
 
 
 class Window(QMainWindow):
@@ -131,8 +132,9 @@ class Window(QMainWindow):
                     self.lbl_province.setText(f"Found province: {province}")
 
     def about(self) -> None:
-        #TODO Dialog
-        print("ABOUT")
+        print("Dialog should be displayed")
+        dlg = AboutDialog(self)
+        dlg.exec_()
 
     def init_events(self) -> None:
         self.btn_train.clicked.connect(
