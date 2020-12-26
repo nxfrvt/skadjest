@@ -17,6 +17,7 @@ class Window(QMainWindow):
         self.menubar = QMenuBar()
         self.setMinimumSize(800, 500)
         self.setWindowTitle('SkadJest')
+        self.setWindowIcon(QIcon('rsc/icons/app.png'))
         self.__center()
         self.show()
 
