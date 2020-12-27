@@ -53,7 +53,7 @@ def load_training_data():
         training_labels[1] = [0, 1, 0, 0, 0, ... 0]
         training_labels[2] = [0, 0, 1, 0, 0, ... 0]
         """
-    for char in range(len(charset)):
+    for char in charset:
         image = cv2.imread('rsc/training_data/' + str(char) + '.png')
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         image = cv2.resize(image, (IMG_WIDTH, IMG_HEIGHT))  # every training data gets resize to 15x30 pixels
@@ -152,5 +152,7 @@ class NeuralNetwork:
 
 if __name__ == '__main__':
     nn = NeuralNetwork()
-    test = cv2.imread('rsc/training_data/2.png')
+    # while True:
+    charac = input("Podaj litere")
+    test = cv2.imread('rsc/training_data/' + str(charac) + '.png')
     nn.estimate(test)
