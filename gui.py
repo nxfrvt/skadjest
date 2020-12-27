@@ -5,8 +5,24 @@ import sys
 from PyQt5 import QtCore
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import QWidget, QDesktopWidget, \
-    QGridLayout, QPushButton, QLabel, QMainWindow, QAction, QMenuBar, QFileDialog
-from about import AboutDialog
+    QGridLayout, QPushButton, QLabel, QMainWindow, QAction, QMenuBar, QFileDialog, QVBoxLayout, QDialog
+
+
+class AboutDialog(QDialog):
+
+    def __init__(self, *args, **kwargs):
+        super(AboutDialog, self).__init__(*args, **kwargs)
+
+        self.setWindowTitle("About")
+        self.setWindowIcon(QIcon('rsc/icons/about.png'))
+        self.setFixedSize(300, 100)
+
+        self.label = QLabel("Authors\n\nBartłomiej Mazurek\nMichał Staruch")
+        self.label.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.label)
+        self.setLayout(self.layout)
 
 
 class Window(QMainWindow):
