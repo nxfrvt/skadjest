@@ -64,7 +64,17 @@ def load_training_data():
         training_labels[label][label] = 1
 
 
-class NeuralNetwork:
+class NeuralNetworkMeta(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            instance = super().__call__(*args, **kwargs)
+            cls._instances[cls] = instance
+        return cls._instances[cls]
+
+
+class NeuralNetwork(metaclass=NeuralNetworkMeta):
     def __init__(self):
         """Ctor"""
         self.neurons = (64, 47, 35)
@@ -135,6 +145,10 @@ class NeuralNetwork:
             self.biases[layer] += self.temp_biases[layer]
 
     def estimate(self, img_char):
+        """Estimates based on what network "knows" what character
+        is on provided image
+        :param: img_char: image read by cv2 function imread
+        :return: index: index of character located in the charset list"""
         img_char = cv2.cvtColor(img_char, cv2.COLOR_BGR2GRAY)
         img_char = cv2.resize(img_char, (IMG_WIDTH, IMG_HEIGHT))
         img_char = img_char.reshape(IMG_SIZE, 1)
@@ -152,6 +166,9 @@ class NeuralNetwork:
 
 if __name__ == '__main__':
     nn = NeuralNetwork()
+    nn2 = NeuralNetwork()
+    if id(nn) == id(nn2):
+        print("YAY! SINGLETON! :D")
     # while True:
     charac = input("Podaj litere")
     test = cv2.imread('rsc/training_data/' + str(charac) + '.png')
