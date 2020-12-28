@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import imutils
+from operator import itemgetter
 
 
 def find_license_plate(path):
@@ -38,11 +39,10 @@ def find_license_plate(path):
     (topx, topy) = (np.min(x), np.min(y))
     (bottomx, bottomy) = (np.max(x), np.max(y))
     img_cropped = img_gray[topx:bottomx + 1, topy:bottomy + 1]
+    return __extract_chars(img_cropped)
 
-    return img_cropped
 
-
-def extract_chars(plate):
+def __extract_chars(plate):
     plate = cv2.resize(plate, (plate.shape[1] * 2, plate.shape[0] * 2))
 
     plate_contrast = (255 / 1) * (plate / (255 / 1)) ** 2
@@ -60,9 +60,11 @@ def extract_chars(plate):
         bb_list.append(bb)
 
     # removing rectangles that overlap existing ones
-    bb_list = remove_overlaps(bb_list)
+    bb_list = __remove_overlaps(bb_list)
     # removing rectangles that are inside of other rectangles
-    bb_list = remove_insides(bb_list)
+    bb_list = __remove_insides(bb_list)
+
+    bb_list.sort(key=itemgetter(0))  # we do this so rectangles are in order from right to left
 
     # debug: draw boxes
     img_boxes = plate.copy()
@@ -71,14 +73,12 @@ def extract_chars(plate):
         x, y, w, h = bb
         cv2.rectangle(img_boxes, (x, y), (x + w, y + h), (0, 255, 0), 2)
         img_cropped = plate[y:y+h, x:x+w]
-        cv2.imwrite('tmp/'+ str(label) + '.jpg', img_cropped)
-        # cv2.imshow(str(labul), img_boxes)
+        cv2.imwrite('tmp/' + str(label) + '.jpg', img_cropped)
         label += 1
 
     return img_boxes
 
-
-def remove_overlaps(bb_list):
+def __remove_overlaps(bb_list):
     threshold = 5  # próg kiedy rectangle zostaje odrzucony jako taki sam, 5 wydaje sie git
     index = 0
     while index < len(bb_list):
@@ -93,7 +93,7 @@ def remove_overlaps(bb_list):
     return bb_list
 
 
-def remove_insides(bb_list):
+def __remove_insides(bb_list):
     index = 0
     while index < len(bb_list):
         x1, y1, w1, h1 = bb_list[index]
@@ -110,6 +110,5 @@ def remove_insides(bb_list):
 
 
 if __name__ == '__main__':
-    x = find_license_plate('rsc/photos/tab_001.jpg')
-    cv2.imshow('car', extract_chars(x))
+    cv2.imshow('car', find_license_plate('rsc/photos/tab_003.jpg'))
     cv2.waitKey(0)
