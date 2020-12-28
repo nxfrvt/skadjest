@@ -1,7 +1,6 @@
 import numpy as np
 import cv2
 import imutils
-import itertools
 
 
 def find_license_plate(path):
@@ -44,23 +43,15 @@ def find_license_plate(path):
 
 
 def extract_chars(plate):
-    pass
-    # # debug: draw all contours
-    # cv2.drawContours(plate, contours, -1, (0, 0, 255), 2)
-    # cv2.imwrite("all_contours.jpg", plate)
+    plate = cv2.resize(plate, (plate.shape[1] * 2, plate.shape[0] * 2))
 
+    plate_contrast = (255 / 1) * (plate / (255 / 1)) ** 2
+    plate_contrast = np.array(plate_contrast, dtype=np.uint8)
 
-if __name__ == '__main__':
-    x = find_license_plate('image.png')
-    x = cv2.resize(x, (x.shape[1] * 2, x.shape[0] * 2))
-
-    x_contrast = (255 / 1) * (x / (255 / 1)) ** 2
-    x_contrast = np.array(x_contrast, dtype=np.uint8)
-
-    x_edge = cv2.Canny(x_contrast, 30, 200)
-    contours, _ = cv2.findContours(x_edge.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    plate_edge = cv2.Canny(plate_contrast, 30, 200)
+    contours, _ = cv2.findContours(plate_edge.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     contours = sorted(contours, key=cv2.contourArea, reverse=True)[:15]
-    # cv2.drawContours(x, contours, -1, (0, 255, 0), 2)
+    # cv2.drawContours(plate, contours, -1, (0, 255, 0), 2)
 
     #### create one bounding box for every contour found
     bb_list = []
@@ -80,17 +71,21 @@ if __name__ == '__main__':
                 bb_list.remove(other_rect)
                 index -= 1
         index += 1
-
+    # removing rectangles that are inside of other rectangles
     # debug: draw boxes
-    img_boxes = x.copy()
-    print(bb_list)
-    labul = 1
+    img_boxes = plate.copy()
+    # labul = 1
     for bb in bb_list:
         x, y, w, h = bb
         cv2.rectangle(img_boxes, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        cv2.imshow(str(labul), img_boxes)
-        cv2.waitKey(0)
-        labul += 1
+        # cv2.imshow(str(labul), img_boxes)
+        # cv2.waitKey(0)
+        # labul += 1
 
-    # cv2.imshow('car', img_boxes)
-    # cv2.waitKey(0)
+    return img_boxes
+
+
+if __name__ == '__main__':
+    x = find_license_plate('rsc/photos/tab_004.jpg')
+    cv2.imshow('car', extract_chars(x))
+    cv2.waitKey(0)
