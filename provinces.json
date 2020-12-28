@@ -1,0 +1,19 @@
+{
+  "provinces": [
+      {"symbol": "B", "province": "podlaskie"},
+      {"symbol": "C", "province": "kujawsko-pomorskie"},
+      {"symbol": "D", "province": "dolnośląskie"},
+      {"symbol": "E", "province": "łódzkie"},
+      {"symbol": "F", "province": "lubuskie"},
+      {"symbol": "G", "province": "pomorskie"},
+      {"symbol": "K", "province": "małopolskie"},
+      {"symbol": "L", "province": "lubelskie"},
+      {"symbol": "N", "province": "warmińsko-mazurskie"},
+      {"symbol": "O", "province": "opolskie"},
+      {"symbol": "P", "province": "wielkopolskie"},
+      {"symbol": "R", "province": "podkarpackie"},
+      {"symbol": "S", "province": "śląskie"},
+      {"symbol": "T", "province": "świętokrzyskie"},
+      {"symbol": "W", "province": "mazowieckie"},
+      {"symbol": "Z", "province": "zachodniopomorskie"}
+]}
