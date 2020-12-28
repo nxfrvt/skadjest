@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import imutils
+import itertools
 
 
 def find_license_plate(path):
@@ -14,7 +15,7 @@ def find_license_plate(path):
 
     #  finding all the contours in the image, then sorting them and taking only first 10 of them
     contours = cv2.findContours(img_edge.copy(), cv2.RETR_TREE,
-                                 cv2.CHAIN_APPROX_SIMPLE)
+                                cv2.CHAIN_APPROX_SIMPLE)
     contours = imutils.grab_contours(contours)
     contours = sorted(contours, key=cv2.contourArea, reverse=True)[:10]
     screen_count = None
@@ -30,14 +31,14 @@ def find_license_plate(path):
 
     #  putting a mask on area that is not a license plate
     mask = np.zeros(img_gray.shape, np.uint8)
-    img_masked = cv2.drawContours(mask, [screen_count], 0, 255, -1,)
+    img_masked = cv2.drawContours(mask, [screen_count], 0, 255, -1, )
     img_masked = cv2.bitwise_and(img, img, mask=mask)
 
     #  cropping masked image
     (x, y) = np.where(mask == 255)
     (topx, topy) = (np.min(x), np.min(y))
     (bottomx, bottomy) = (np.max(x), np.max(y))
-    img_cropped = img_gray[topx:bottomx+1, topy:bottomy+1]
+    img_cropped = img_gray[topx:bottomx + 1, topy:bottomy + 1]
 
     return img_cropped
 
@@ -51,7 +52,7 @@ def extract_chars(plate):
 
 if __name__ == '__main__':
     x = find_license_plate('image.png')
-    x = cv2.resize(x, (x.shape[1]*2, x.shape[0]*2))
+    x = cv2.resize(x, (x.shape[1] * 2, x.shape[0] * 2))
 
     x_contrast = (255 / 1) * (x / (255 / 1)) ** 2
     x_contrast = np.array(x_contrast, dtype=np.uint8)
@@ -67,11 +68,29 @@ if __name__ == '__main__':
         bb = cv2.boundingRect(c)
         bb_list.append(bb)
 
+    # removing rectangles that overlap existing ones
+    threshold = 5  # próg kiedy rectangle zostaje odrzucony jako taki sam
+    index = 0
+    while index < len(bb_list):
+        rect = bb_list[index]
+        for other_rect in bb_list[index + 1:]:
+            other_substracted = tuple(np.subtract(other_rect, (threshold, threshold, threshold, threshold)))
+            other_added = tuple(np.add(other_rect, (threshold, threshold, threshold, threshold)))
+            if other_substracted < rect < other_added:
+                bb_list.remove(other_rect)
+                index -= 1
+        index += 1
+
     # debug: draw boxes
     img_boxes = x.copy()
+    print(bb_list)
+    labul = 1
     for bb in bb_list:
-      x,y,w,h = bb
-      cv2.rectangle(img_boxes, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        x, y, w, h = bb
+        cv2.rectangle(img_boxes, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        cv2.imshow(str(labul), img_boxes)
+        cv2.waitKey(0)
+        labul += 1
 
-    cv2.imshow('car', img_boxes)
-    cv2.waitKey(0)
+    # cv2.imshow('car', img_boxes)
+    # cv2.waitKey(0)
