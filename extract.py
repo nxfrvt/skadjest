@@ -78,6 +78,7 @@ def __extract_chars(plate):
 
     return img_boxes
 
+
 def __remove_overlaps(bb_list):
     threshold = 5  # próg kiedy rectangle zostaje odrzucony jako taki sam, 5 wydaje sie git
     index = 0
@@ -110,5 +111,5 @@ def __remove_insides(bb_list):
 
 
 if __name__ == '__main__':
-    cv2.imshow('car', find_license_plate('rsc/photos/tab_003.jpg'))
+    cv2.imshow('car', find_license_plate('rsc/photos/tab_004.jpg'))
     cv2.waitKey(0)

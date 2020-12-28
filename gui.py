@@ -136,7 +136,7 @@ def load_photo(window: Window) -> None:
     path, _filter = QFileDialog.getOpenFileName(
         parent=window,
         caption=window.tr("Open file"),
-        directory='c:\\users\\mazur\\desktop',
+        directory='rsc/photos',
         filter=window.tr("Image files (*.png *.jpg *.gif)"))
     window.photo.setPixmap(QPixmap(path))
     window.statusBar().showMessage("Image loaded")
