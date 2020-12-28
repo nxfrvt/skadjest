@@ -38,6 +38,7 @@ class Window(QMainWindow):
         self.show()
 
         self.plate = "None"
+        self.path = ""
         self.photo = QLabel("Your photo will appear here once loaded")
         self.photo.setScaledContents(True)
         self.photo.setAlignment(QtCore.Qt.AlignCenter)
@@ -128,7 +129,7 @@ class Window(QMainWindow):
         dlg.exec_()
 
 
-def load_photo(window: Window) -> None:
+def load_photo(window: Window):
     """Prompts a file dialog and then
     loads chosen image file"""
     window.statusBar().showMessage("File explorer opened")

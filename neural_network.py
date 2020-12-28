@@ -169,5 +169,5 @@ if __name__ == '__main__':
 
     while True:
         charac = input("Podaj litere")
-        test = cv2.imread('rsc/training_data/' + str(charac) + '.png')
+        test = cv2.imread('tmp/' + str(charac) + '.jpg')
         nn.estimate(test)
