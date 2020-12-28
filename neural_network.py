@@ -89,7 +89,7 @@ class NeuralNetwork(metaclass=NeuralNetworkMeta):
         self.delta = []
 
         self.init_layers()
-        self.train()
+        self.train(10000)
 
     def init_layers(self):
         """Initializes all 3 layers with random values (weights and biases)"""
@@ -104,9 +104,8 @@ class NeuralNetwork(metaclass=NeuralNetworkMeta):
             self.derivatives.append(np.zeros((self.neurons[layer], 1)))
             self.delta.append(np.zeros((self.neurons[layer], 1)))
 
-    def train(self):
+    def train(self, it):
         load_training_data()
-        it = 10000
         samples = list(range(len(training_data[0])))
         for dab in range(it):
             if dab % (it / 100) == 0:
