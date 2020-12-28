@@ -166,10 +166,8 @@ class NeuralNetwork(metaclass=NeuralNetworkMeta):
 
 if __name__ == '__main__':
     nn = NeuralNetwork()
-    nn2 = NeuralNetwork()
-    if id(nn) == id(nn2):
-        print("YAY! SINGLETON! :D")
-    # while True:
-    charac = input("Podaj litere")
-    test = cv2.imread('rsc/training_data/' + str(charac) + '.png')
-    nn.estimate(test)
+
+    while True:
+        charac = input("Podaj litere")
+        test = cv2.imread('rsc/training_data/' + str(charac) + '.png')
+        nn.estimate(test)
