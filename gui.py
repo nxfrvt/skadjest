@@ -3,9 +3,16 @@ import pathlib
 import sys
 
 from PyQt5 import QtCore
-from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtCore import QRegExp
+from PyQt5.QtGui import QIcon, QPixmap, QRegExpValidator
 from PyQt5.QtWidgets import QWidget, QDesktopWidget, \
-    QGridLayout, QPushButton, QLabel, QMainWindow, QAction, QMenuBar, QFileDialog, QVBoxLayout, QDialog
+    QGridLayout, QPushButton, QLabel, QMainWindow, QAction, QMenuBar, QFileDialog, QVBoxLayout, QDialog, QPlainTextEdit, \
+    QTextEdit, QLineEdit, QSizePolicy
+
+from extract import find_license_plate, LicensePlateException
+from neural_network import NeuralNetwork as nn
+
+nn = nn()
 
 
 class AboutDialog(QDialog):
@@ -43,12 +50,17 @@ class Window(QMainWindow):
         self.photo.setScaledContents(True)
         self.photo.setAlignment(QtCore.Qt.AlignCenter)
 
-        self.lbl_plate = QLabel("Plate read from the image:")
-        self.lbl_province = QLabel("Found province: ")
-
         self.btn_train = QPushButton("Train")
         self.btn_open = QPushButton("Open a photo")
         self.btn_read = QPushButton("Read the plate")
+
+        self.lbl_plate = QLabel("Plate read from the image:")
+        self.lbl_province = QLabel("Found province: ")
+        self.txt_iterations = QLineEdit("10000")
+        self.txt_iterations.setValidator(QRegExpValidator(QRegExp("[1-9][0-9]{1,4}")))  # allows training in 1-99999 range
+        self.txt_iterations.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)  # no idea what it does
+        # but w/o LineEdit is huge
+
         self.__init_ui()
 
     def __init_ui(self) -> None:
@@ -57,15 +69,16 @@ class Window(QMainWindow):
         self.statusBar().showMessage("Starting the application.")
 
         #  add the menu bar at the top
-        layout.addWidget(self.__init_menubar(), 0, 0, 1, 4)
+        layout.addWidget(self.__init_menubar(), 0, 0, 1, 8)
 
-        layout.addWidget(self.btn_train, 1, 0)
-        layout.addWidget(self.btn_open, 6, 0)
-        layout.addWidget(self.btn_read, 8, 0)
+        layout.addWidget(self.btn_train, 1, 0, 1, 2)
+        layout.addWidget(self.txt_iterations, 2, 1, 1, 1)
+        layout.addWidget(self.btn_open, 6, 0, 1, 2)
+        layout.addWidget(self.btn_read, 8, 0, 1, 2)
 
-        layout.addWidget(self.photo, 1, 1, 15, 3)
-        layout.addWidget(self.lbl_plate, 10, 0)
-        layout.addWidget(self.lbl_province, 12, 0)
+        layout.addWidget(self.photo, 1, 2, 15, 6)
+        layout.addWidget(self.lbl_plate, 10, 0, 1, 2)
+        layout.addWidget(self.lbl_province, 12, 0, 1, 2)
 
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
@@ -111,8 +124,7 @@ class Window(QMainWindow):
 
     def __init_events(self) -> None:
         """Connects all events to corresponding widgets"""
-        self.btn_train.clicked.connect(
-            lambda: self.statusBar().showMessage("Training the network"))  # TODO podpiecie pod trenowanie
+        self.btn_train.clicked.connect(lambda: train(self))
         self.btn_open.clicked.connect(lambda: load_photo(self))
         self.btn_read.clicked.connect(lambda: read_plate(self))
 
@@ -129,6 +141,18 @@ class Window(QMainWindow):
         dlg.exec_()
 
 
+def train(window: Window):
+    window.txt_iterations.setVisible(False)
+    iterations = int(window.txt_iterations.text())
+    if iterations == "":
+        pass
+        # TODO wymus wprowadzenia numeru(dialog?)
+    else:
+        nn.train(iterations)
+        window.btn_train.setEnabled(False)
+        window.statusBar().showMessage("Network trained")
+
+
 def load_photo(window: Window):
     """Prompts a file dialog and then
     loads chosen image file"""
@@ -140,6 +164,7 @@ def load_photo(window: Window):
         directory='rsc/photos',
         filter=window.tr("Image files (*.png *.jpg *.gif)"))
     window.photo.setPixmap(QPixmap(path))
+    window.path = path
     window.statusBar().showMessage("Image loaded")
 
 
@@ -147,7 +172,16 @@ def read_plate(window: Window) -> None:
     """Reads the lbl_plate from photo and
     updates the corresponding label"""
     window.statusBar().showMessage("Reading the plate from the image")
-    window.lbl_plate.setText(f"Plate read from the image:\n WU6337A")
+    try:
+        find_license_plate(window.path)
+    except LicensePlateException:
+        print("damn error again")
+        # TODO dialog
+    plate = ""
+    #TODO wykrycie ilosc jpgow w tmp i ustawienie takie range
+    for photo in range(1, 8):
+        plate += nn.estimate("tmp/" + str(photo) + ".jpg")
+    window.lbl_plate.setText(f"Plate read from the image:\n {plate}")
     window.statusBar().showMessage("Looking for matching province symbols")
     window.lbl_province.setText("Matching province couldn't be found")
     detect_province(window)
@@ -164,5 +198,3 @@ def detect_province(window: Window) -> None:
             if province_char == p['symbol']:
                 province = p['province']
                 window.lbl_province.setText(f"Found province: {province}")
-
-

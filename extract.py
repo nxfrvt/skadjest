@@ -29,6 +29,8 @@ def find_license_plate(path):
             cv2.drawContours(img, [screen_count], -1, (0, 255, 0), 3)
             break
 
+    if screen_count is None:
+        raise LicensePlateException("Could not find any matching plate")
     #  putting a mask on area that is not a license plate
     mask = np.zeros(img_gray.shape, np.uint8)
     img_masked = cv2.drawContours(mask, [screen_count], 0, 255, -1, )
@@ -97,6 +99,8 @@ def __remove_overlaps(bb_list):
 def __remove_insides(bb_list):
     index = 0
     while index < len(bb_list):
+        if index < 0:
+            raise LicensePlateException("There was an error detecting a plate. Possible other rectangle outside the plate")
         x1, y1, w1, h1 = bb_list[index]
         for other_rect in bb_list[index + 1:]:
             x2, y2, w2, h2 = other_rect
@@ -110,6 +114,13 @@ def __remove_insides(bb_list):
     return bb_list
 
 
+class LicensePlateException(Exception):
+
+    def __init__(self, message):
+        super(LicensePlateException, self).__init__(message)
+
+
 if __name__ == '__main__':
-    cv2.imshow('car', find_license_plate('rsc/photos/tab_004.jpg'))
+    cv2.imshow('car', find_license_plate('rsc/photos/tab_002.jpg'))
     cv2.waitKey(0)
+

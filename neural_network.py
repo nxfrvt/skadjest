@@ -89,7 +89,6 @@ class NeuralNetwork(metaclass=NeuralNetworkMeta):
         self.delta = []
 
         self.init_layers()
-        self.train(10000)
 
     def init_layers(self):
         """Initializes all 3 layers with random values (weights and biases)"""
@@ -105,6 +104,8 @@ class NeuralNetwork(metaclass=NeuralNetworkMeta):
             self.delta.append(np.zeros((self.neurons[layer], 1)))
 
     def train(self, it):
+        """Trains the network for given iterations
+        :param: it: Number of iterations for network to be trained"""
         load_training_data()
         samples = list(range(len(training_data[0])))
         for dab in range(it):
@@ -148,6 +149,7 @@ class NeuralNetwork(metaclass=NeuralNetworkMeta):
         is on provided image
         :param: img_char: image read by cv2 function imread
         :return: index: index of character located in the charset list"""
+        img_char = cv2.imread(img_char)
         img_char = cv2.cvtColor(img_char, cv2.COLOR_BGR2GRAY)
         img_char = cv2.resize(img_char, (IMG_WIDTH, IMG_HEIGHT))
         img_char = img_char.reshape(IMG_SIZE, 1)
@@ -160,13 +162,15 @@ class NeuralNetwork(metaclass=NeuralNetworkMeta):
         index = int(activations.argmax(axis=0))
         print(str(int(activations.argmax(axis=0))) + ": " + str(float(activations[index]) * 100))
         print(f"Found char: {charset[index]}")
-        return index
+        return charset[index]
 
 
 if __name__ == '__main__':
     nn = NeuralNetwork()
+    registry = ''
 
     while True:
         charac = input("Podaj litere")
         test = cv2.imread('tmp/' + str(charac) + '.jpg')
-        nn.estimate(test)
+        registry += charset[nn.estimate(test)]
+        print(registry)
