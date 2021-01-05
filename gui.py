@@ -6,8 +6,8 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import QRegExp
 from PyQt5.QtGui import QIcon, QPixmap, QRegExpValidator
 from PyQt5.QtWidgets import QWidget, QDesktopWidget, \
-    QGridLayout, QPushButton, QLabel, QMainWindow, QAction, QMenuBar, QFileDialog, QVBoxLayout, QDialog, QPlainTextEdit, \
-    QTextEdit, QLineEdit, QSizePolicy
+    QGridLayout, QPushButton, QLabel, QMainWindow, QAction, QMenuBar, QFileDialog, QVBoxLayout, QDialog, \
+    QLineEdit, QSizePolicy, QProgressBar
 
 from extract import find_license_plate, LicensePlateException
 from neural_network import NeuralNetwork as nn
@@ -29,6 +29,51 @@ class AboutDialog(QDialog):
 
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.label)
+        self.setLayout(self.layout)
+
+
+class ErrorDialog(QDialog):
+
+    def __init__(self, *args, **kwargs):
+        super(ErrorDialog, self).__init__(*args, **kwargs)
+
+        self.setWindowTitle("Error")
+        self.setWindowIcon(QIcon('rsc/icons/error.png'))
+        self.setFixedSize(300, 100)
+
+        self.btn_close = QPushButton("OK")
+        self.btn_close.clicked.connect(lambda: self.close())
+
+
+class BadInputDialog(ErrorDialog):
+
+    def __init__(self, *args, **kwargs):
+        super(BadInputDialog, self).__init__(*args, **kwargs)
+
+        self.label = QLabel("You have to enter a value between 1 and 99999!")
+        self.label.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.label)
+        self.layout.addWidget(self.btn_close)
+        self.setLayout(self.layout)
+
+
+class PlateNotFoundDialog(ErrorDialog):
+
+    def __init__(self, *args, **kwargs):
+        super(PlateNotFoundDialog, self).__init__(*args, **kwargs)
+
+        self.lbl_error = QLabel("There was an error finding the plate.")
+        self.lbl_error.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.lbl_tip = QLabel("Please try again with another image.")
+        self.lbl_tip.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.lbl_error)
+        self.layout.addWidget(self.lbl_tip)
+        self.layout.addWidget(self.btn_close)
         self.setLayout(self.layout)
 
 
@@ -54,12 +99,14 @@ class Window(QMainWindow):
         self.btn_open = QPushButton("Open a photo")
         self.btn_read = QPushButton("Read the plate")
 
+        self.prg_bar = QProgressBar(self)
+        self.prg_bar.setVisible(False)
         self.lbl_plate = QLabel("Plate read from the image:")
         self.lbl_province = QLabel("Found province: ")
         self.txt_iterations = QLineEdit("10000")
         self.txt_iterations.setValidator(QRegExpValidator(QRegExp("[1-9][0-9]{1,4}")))  # allows training in 1-99999 range
         self.txt_iterations.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)  # no idea what it does
-        # but w/o LineEdit is huge
+        # but w/o it LineEdit is huge
 
         self.__init_ui()
 
@@ -72,6 +119,7 @@ class Window(QMainWindow):
         layout.addWidget(self.__init_menubar(), 0, 0, 1, 8)
 
         layout.addWidget(self.btn_train, 1, 0, 1, 2)
+        layout.addWidget(self.prg_bar, 2, 0, 1, 2)
         layout.addWidget(self.txt_iterations, 2, 1, 1, 1)
         layout.addWidget(self.btn_open, 6, 0, 1, 2)
         layout.addWidget(self.btn_read, 8, 0, 1, 2)
@@ -142,14 +190,16 @@ class Window(QMainWindow):
 
 
 def train(window: Window):
-    window.txt_iterations.setVisible(False)
-    iterations = int(window.txt_iterations.text())
+    iterations = window.txt_iterations.text()
     if iterations == "":
-        pass
-        # TODO wymus wprowadzenia numeru(dialog?)
+        dlg = BadInputDialog(window)
+        dlg.exec_()
     else:
-        nn.train(iterations)
+        window.txt_iterations.setVisible(False)
+        window.prg_bar.setVisible(True)
         window.btn_train.setEnabled(False)
+        nn.train(int(iterations), window.prg_bar)
+        window.prg_bar.setVisible(False)
         window.statusBar().showMessage("Network trained")
 
 
@@ -174,18 +224,18 @@ def read_plate(window: Window) -> None:
     window.statusBar().showMessage("Reading the plate from the image")
     try:
         find_license_plate(window.path)
+        plate = ""
+        # TODO wykrycie ilosc jpgow w tmp i ustawienie takie range
+        for photo in range(1, 8):
+            plate += nn.estimate("tmp/" + str(photo) + ".jpg")
+        window.lbl_plate.setText(f"Plate read from the image:\n {plate}")
+        window.statusBar().showMessage("Looking for matching province symbols")
+        window.lbl_province.setText("Matching province couldn't be found")
+        detect_province(window)
+        window.statusBar().showMessage("Application ready")
     except LicensePlateException:
-        print("damn error again")
-        # TODO dialog
-    plate = ""
-    #TODO wykrycie ilosc jpgow w tmp i ustawienie takie range
-    for photo in range(1, 8):
-        plate += nn.estimate("tmp/" + str(photo) + ".jpg")
-    window.lbl_plate.setText(f"Plate read from the image:\n {plate}")
-    window.statusBar().showMessage("Looking for matching province symbols")
-    window.lbl_province.setText("Matching province couldn't be found")
-    detect_province(window)
-    window.statusBar().showMessage("Application ready")
+        dlg = PlateNotFoundDialog(window)
+        dlg.exec_()
 
 
 def detect_province(window: Window) -> None:

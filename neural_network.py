@@ -103,14 +103,14 @@ class NeuralNetwork(metaclass=NeuralNetworkMeta):
             self.derivatives.append(np.zeros((self.neurons[layer], 1)))
             self.delta.append(np.zeros((self.neurons[layer], 1)))
 
-    def train(self, it):
+    def train(self, it, prgbar):
         """Trains the network for given iterations
         :param: it: Number of iterations for network to be trained"""
         load_training_data()
         samples = list(range(len(training_data[0])))
         for dab in range(it):
             if dab % (it / 100) == 0:
-                print(str(dab / it * 100))
+                prgbar.setValue(dab / it * 100)
             sample = samples[dab % len(training_data)]
             current_label = np.array(training_labels[sample]).reshape((self.neurons[-1], 1))
             self.activations[0] = sigmoid(np.dot(self.weights[0], training_data[sample]) + self.biases[0])
